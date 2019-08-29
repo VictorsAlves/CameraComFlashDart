@@ -1,3 +1,8 @@
+## 0.5.2
+
+* Added capability to disable audio for the `CameraController`. (e.g. `CameraController(_, _,
+ enableAudio: false);`)
+
 ## 0.5.4+1
 
 * Fix Android pause and resume video crash when executing in APIs below 24.
