@@ -149,7 +149,7 @@ public class Camera {
     mediaRecorder.setOutputFormat(recordingProfile.fileFormat);
     if (enableAudio) mediaRecorder.setAudioEncoder(recordingProfile.audioCodec);
     mediaRecorder.setVideoEncoder(recordingProfile.videoCodec);
-    mediaRecorder.setVideoEncodingBitRate(recordingProfile.videoBitRate);
+    mediaRecorder.setVideoEncodingBitRate(3000000);
     if (enableAudio) mediaRecorder.setAudioSamplingRate(recordingProfile.audioSampleRate);
     mediaRecorder.setVideoFrameRate(recordingProfile.videoFrameRate);
     mediaRecorder.setVideoSize(recordingProfile.videoFrameWidth, recordingProfile.videoFrameHeight);
@@ -269,6 +269,8 @@ public class Camera {
           cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
       captureBuilder.addTarget(pictureImageReader.getSurface());
       captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getMediaOrientation());
+      captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
+              CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
 
       cameraCaptureSession.capture(
           captureBuilder.build(),
