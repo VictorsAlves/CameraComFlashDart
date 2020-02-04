@@ -163,7 +163,7 @@ public class Camera {
   public void open(@NonNull final Result result) throws CameraAccessException {
     pictureImageReader =
         ImageReader.newInstance(
-            captureSize.getWidth(), captureSize.getHeight(), ImageFormat.JPEG, 2);
+            captureSize.getWidth(), captureSize.getHeight(), ImageFormat.YUV_420_888, 2);
 
     // Used to steam image byte data to dart side.
     imageStreamReader =
@@ -451,7 +451,7 @@ public class Camera {
   }
 
   public void startPreview() throws CameraAccessException {
-    createCaptureSession(CameraDevice.TEMPLATE_PREVIEW, pictureImageReader.getSurface());
+    createCaptureSession(CameraDevice.TEMPLATE_RECORD, pictureImageReader.getSurface());
   }
 
   public void startPreviewWithImageStream(EventChannel imageStreamChannel)
