@@ -30,19 +30,19 @@ public final class CameraUtils {
     }
 
     CamcorderProfile profile =
-        getBestAvailableCamcorderProfileForResolutionPreset(cameraName, preset);
+            getBestAvailableCamcorderProfileForResolutionPreset(cameraName, preset);
     return new Size(profile.videoFrameWidth, profile.videoFrameHeight);
   }
 
   static Size computeBestCaptureSize(StreamConfigurationMap streamConfigurationMap) {
     // For still image captures, we use the largest available size.
     return Collections.max(
-        Arrays.asList(streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)),
-        new CompareSizesByArea());
+            Arrays.asList(streamConfigurationMap.getOutputSizes(ImageFormat.JPEG)),
+            new CompareSizesByArea());
   }
 
   public static List<Map<String, Object>> getAvailableCameras(Activity activity)
-      throws CameraAccessException {
+          throws CameraAccessException {
     CameraManager cameraManager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
     String[] cameraNames = cameraManager.getCameraIdList();
     List<Map<String, Object>> cameras = new ArrayList<>();
@@ -71,41 +71,40 @@ public final class CameraUtils {
   }
 
   static CamcorderProfile getBestAvailableCamcorderProfileForResolutionPreset(
-      String cameraName, ResolutionPreset preset) {
+          String cameraName, ResolutionPreset preset) {
     int cameraId = Integer.parseInt(cameraName);
     switch (preset) {
-        // All of these cases deliberately fall through to get the best available profile.
+      // All of these cases deliberately fall through to get the best available profile.
       case max:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_HIGH)) {
-          return CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+          return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_HIGH);
         }
       case ultraHigh:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_2160P)) {
-          return CamcorderProfile.get(CamcorderProfile.QUALITY_2160P);
+          return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_2160P);
         }
       case veryHigh:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_1080P)) {
-          return CamcorderProfile.get(CamcorderProfile.QUALITY_1080P);
+          return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_1080P);
         }
       case high:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_720P)) {
-          return CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
+          return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_720P);
         }
       case medium:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_480P)) {
-          return CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+          return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_480P);
         }
       case low:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_QVGA)) {
-          return CamcorderProfile.get(CamcorderProfile.QUALITY_QVGA);
+          return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_QVGA);
         }
       default:
-        if (CamcorderProfile.hasProfile(
-            Integer.parseInt(cameraName), CamcorderProfile.QUALITY_LOW)) {
-          return CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
+        if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_LOW)) {
+          return CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
         } else {
           throw new IllegalArgumentException(
-              "No capture session available for current capture session.");
+                  "No capture session available for current capture session.");
         }
     }
   }
@@ -115,7 +114,7 @@ public final class CameraUtils {
     public int compare(Size lhs, Size rhs) {
       // We cast here to ensure the multiplications won't overflow.
       return Long.signum(
-          (long) lhs.getWidth() * lhs.getHeight() - (long) rhs.getWidth() * rhs.getHeight());
+              (long) lhs.getWidth() * lhs.getHeight() - (long) rhs.getWidth() * rhs.getHeight());
     }
   }
 }

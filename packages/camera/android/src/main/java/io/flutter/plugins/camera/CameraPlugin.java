@@ -1,6 +1,3 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
 
 package io.flutter.plugins.camera;
 
@@ -14,7 +11,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.view.FlutterView;
-import android.content.pm.PackageManager;
+import io.flutter.view.TextureRegistry;
 
 public class CameraPlugin implements MethodCallHandler {
 
@@ -49,23 +46,17 @@ public class CameraPlugin implements MethodCallHandler {
     String cameraName = call.argument("cameraName");
     String resolutionPreset = call.argument("resolutionPreset");
     boolean enableAudio = call.argument("enableAudio");
-    boolean enableFlash = call.argument("enableFlash");
-    boolean enableAutoExposure = call.argument("enableAutoExposure");
+    TextureRegistry.SurfaceTextureEntry flutterSurfaceTexture = view.createSurfaceTexture();
+    DartMessenger dartMessenger =
+            new DartMessenger(registrar.messenger(), flutterSurfaceTexture.id());
     camera =
             new Camera(
                     registrar.activity(),
-                    view,
+                    flutterSurfaceTexture,
+                    dartMessenger,
                     cameraName,
                     resolutionPreset,
-                    enableAudio,
-                    enableFlash,
-                    enableAutoExposure);
-
-    EventChannel cameraEventChannel =
-            new EventChannel(
-                    registrar.messenger(),
-                    "flutter.io/cameraPlugin/cameraEvents" + camera.getFlutterTexture().id());
-    camera.setupCameraEventChannel(cameraEventChannel);
+                    enableAudio);
 
     camera.open(result);
   }
@@ -80,7 +71,8 @@ public class CameraPlugin implements MethodCallHandler {
           handleException(e, result);
         }
         break;
-      case "initialize": {
+      case "initialize":
+      {
         if (camera != null) {
           camera.close();
         }
@@ -101,32 +93,39 @@ public class CameraPlugin implements MethodCallHandler {
 
         break;
       }
-      case "takePicture": {
+      case "takePicture":
+      {
         camera.takePicture(call.argument("path"), result);
         break;
       }
-      case "prepareForVideoRecording": {
+      case "prepareForVideoRecording":
+      {
         // This optimization is not required for Android.
         result.success(null);
         break;
       }
-      case "startVideoRecording": {
+      case "startVideoRecording":
+      {
         camera.startVideoRecording(call.argument("filePath"), result);
         break;
       }
-      case "stopVideoRecording": {
+      case "stopVideoRecording":
+      {
         camera.stopVideoRecording(result);
         break;
       }
-      case "pauseVideoRecording": {
+      case "pauseVideoRecording":
+      {
         camera.pauseVideoRecording(result);
         break;
       }
-      case "resumeVideoRecording": {
+      case "resumeVideoRecording":
+      {
         camera.resumeVideoRecording(result);
         break;
       }
-      case "startImageStream": {
+      case "startImageStream":
+      {
         try {
           camera.startPreviewWithImageStream(imageStreamChannel);
           result.success(null);
@@ -135,7 +134,8 @@ public class CameraPlugin implements MethodCallHandler {
         }
         break;
       }
-      case "stopImageStream": {
+      case "stopImageStream":
+      {
         try {
           camera.startPreview();
           result.success(null);
@@ -144,27 +144,8 @@ public class CameraPlugin implements MethodCallHandler {
         }
         break;
       }
-      case "flashOn": {
-        camera.setFlashMode(result, true, call.argument("level"));
-        break;
-      }
-      case "flashOff": {
-        camera.setFlashMode(result, false);
-        break;
-      }
-      case "hasFlash": {
-        result.success(hasFlash());
-        break;
-      }
-      case "autoExposureOn": {
-        camera.setAutoExposureMode(result, true);
-        break;
-      }
-      case "autoExposureOff": {
-        camera.setAutoExposureMode(result, false);
-        break;
-      }
-      case "dispose": {
+      case "dispose":
+      {
         if (camera != null) {
           camera.dispose();
         }
@@ -176,25 +157,6 @@ public class CameraPlugin implements MethodCallHandler {
         break;
     }
   }
-
-
-  private boolean hasFlash() {
-    return registrar
-            .context()
-            .getApplicationContext()
-            .getPackageManager()
-            .hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
-  }
-
-
-
-
-
-
-
-
-
-
 
   // We move catching CameraAccessException out of onMethodCall because it causes a crash
   // on plugin registration for sdks incompatible with Camera2 (< 21). We want this plugin to

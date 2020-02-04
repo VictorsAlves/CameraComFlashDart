@@ -4,11 +4,13 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:image/image.dart' as imglib;
 
 class CameraExampleHome extends StatefulWidget {
   @override
@@ -41,7 +43,9 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   VideoPlayerController videoController;
   VoidCallback videoPlayerListener;
   bool enableAudio = true;
-  bool enableFlash = false;
+  CameraImage _currentImage;
+  bool _alreadyTookPicture = false;
+
   @override
   void initState() {
     super.initState();
@@ -101,12 +105,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           ),
           _captureControlRowWidget(),
           _toggleAudioWidget(),
-          Row(
-            children: <Widget>[
-              _toggleAudioWidget(),
-              _toggleFlashWidget(),
-            ],
-          ),
           Padding(
             padding: const EdgeInsets.all(5.0),
             child: Row(
@@ -162,38 +160,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     );
   }
 
-  /// Display the Flash Switch
-  Widget _toggleFlashWidget() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 25),
-      child: Row(
-        children: <Widget>[
-          const Text('Enable Flash:'),
-          Switch(value: enableFlash, onChanged: _toggleFlash),
-        ],
-      ),
-    );
-  }
-
-  /// Toggle Flash
-  Future<void> _toggleFlash(bool value) async {
-    bool hasFlash = false;
-
-    if (controller != null) {
-      hasFlash = await controller.hasFlash;
-    }
-
-    if (hasFlash) {
-      enableFlash = value;
-      if (enableFlash) {
-        controller.flashOn();
-      } else {
-        controller.flashOff();
-      }
-    }
-
-    setState(() {});
-  }
   /// Display the thumbnail of the captured image or video.
   Widget _thumbnailWidget() {
     return Expanded(
@@ -205,23 +171,23 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
             videoController == null && imagePath == null
                 ? Container()
                 : SizedBox(
-                    child: (videoController == null)
-                        ? Image.file(File(imagePath))
-                        : Container(
-                            child: Center(
-                              child: AspectRatio(
-                                  aspectRatio:
-                                      videoController.value.size != null
-                                          ? videoController.value.aspectRatio
-                                          : 1.0,
-                                  child: VideoPlayer(videoController)),
-                            ),
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.pink)),
-                          ),
-                    width: 64.0,
-                    height: 64.0,
-                  ),
+              child: (videoController == null)
+                  ? Image.file(File(imagePath))
+                  : Container(
+                child: Center(
+                  child: AspectRatio(
+                      aspectRatio:
+                      videoController.value.size != null
+                          ? videoController.value.aspectRatio
+                          : 1.0,
+                      child: VideoPlayer(videoController)),
+                ),
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.pink)),
+              ),
+              width: 64.0,
+              height: 64.0,
+            ),
           ],
         ),
       ),
@@ -238,8 +204,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           icon: const Icon(Icons.camera_alt),
           color: Colors.blue,
           onPressed: controller != null &&
-                  controller.value.isInitialized &&
-                  !controller.value.isRecordingVideo
+              controller.value.isInitialized &&
+              !controller.value.isRecordingVideo
               ? onTakePictureButtonPressed
               : null,
         ),
@@ -247,8 +213,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
           icon: const Icon(Icons.videocam),
           color: Colors.blue,
           onPressed: controller != null &&
-                  controller.value.isInitialized &&
-                  !controller.value.isRecordingVideo
+              controller.value.isInitialized &&
+              !controller.value.isRecordingVideo
               ? onVideoRecordButtonPressed
               : null,
         ),
@@ -258,19 +224,19 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
               : Icon(Icons.pause),
           color: Colors.blue,
           onPressed: controller != null &&
-                  controller.value.isInitialized &&
-                  controller.value.isRecordingVideo
+              controller.value.isInitialized &&
+              controller.value.isRecordingVideo
               ? (controller != null && controller.value.isRecordingPaused
-                  ? onResumeButtonPressed
-                  : onPauseButtonPressed)
+              ? onResumeButtonPressed
+              : onPauseButtonPressed)
               : null,
         ),
         IconButton(
           icon: const Icon(Icons.stop),
           color: Colors.red,
           onPressed: controller != null &&
-                  controller.value.isInitialized &&
-                  controller.value.isRecordingVideo
+              controller.value.isInitialized &&
+              controller.value.isRecordingVideo
               ? onStopButtonPressed
               : null,
         )
@@ -318,7 +284,6 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     controller = CameraController(
       cameraDescription,
       ResolutionPreset.medium,
-      enableAudio: enableAudio,
     );
 
     // If the controller is updated then update the UI.
@@ -341,6 +306,18 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   }
 
   void onTakePictureButtonPressed() {
+//  _alreadyTookPicture = true;
+//
+//    convertYUV420toFile(_currentImage).then((image) {
+//      showDialog<void>(
+//          context: context,
+//          builder: (context) {
+//            return new Container(
+//              child: Image.file(image),
+//            );
+//          });
+//    });
+
     takePicture().then((String filePath) {
       if (mounted) {
         setState(() {
@@ -450,7 +427,7 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
 
   Future<void> _startVideoPlayer() async {
     final VideoPlayerController vcontroller =
-        VideoPlayerController.file(File(videoPath));
+    VideoPlayerController.file(File(videoPath));
     videoPlayerListener = () {
       if (videoController != null && videoController.value.size != null) {
         // Refreshing the state to update video player with the correct ratio.
@@ -491,6 +468,8 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
     } on CameraException catch (e) {
       _showCameraException(e);
       return null;
+    } on Exception catch (e) {
+      return null;
     }
     return filePath;
   }
@@ -498,6 +477,53 @@ class _CameraExampleHomeState extends State<CameraExampleHome>
   void _showCameraException(CameraException e) {
     logError(e.code, e.description);
     showInSnackBar('Error: ${e.code}\n${e.description}');
+  }
+
+  Future<File> convertYUV420toFile(CameraImage image) async {
+    try {
+      final int width = image.width;
+      final int height = image.height;
+      final int uvRowStride = image.planes[1].bytesPerRow;
+      final int uvPixelStride = image.planes[1].bytesPerPixel;
+
+      var img = imglib.Image(width, height);
+
+      for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+          final int uvIndex =
+              uvPixelStride * (x / 2).floor() + uvRowStride * (y / 2).floor();
+          final int index = y * width + x;
+
+          final yp = image.planes[0].bytes[index];
+          final up = image.planes[1].bytes[uvIndex];
+          final vp = image.planes[2].bytes[uvIndex];
+
+          int r = (yp + vp * 1436 / 1024 - 179).round().clamp(0, 255);
+          int g = (yp - up * 46549 / 131072 + 44 - vp * 93604 / 131072 + 91)
+              .round()
+              .clamp(0, 255);
+          int b = (yp + up * 1814 / 1024 - 227).round().clamp(0, 255);
+
+          img.data[index] = (0xFF << 24) | (b << 16) | (g << 8) | r;
+        }
+      }
+
+      imglib.JpegEncoder jpgEncoder = new imglib.JpegEncoder(quality: 90);
+      Uint8List jpeg = jpgEncoder.encodeImage(img);
+
+      final Directory extDir = await getApplicationDocumentsDirectory();
+      final String dirPath = '${extDir.path}/Pictures/flutter_test';
+      await Directory(dirPath).create(recursive: true);
+      final String filePath = '$dirPath/${timestamp()}.jpg';
+
+      var file = new File(filePath);
+      file = await file.writeAsBytes(jpeg);
+
+      return file;
+    } catch (e) {
+      print(">>>>>>>>>>>> ERROR:" + e.toString());
+    }
+    return null;
   }
 }
 

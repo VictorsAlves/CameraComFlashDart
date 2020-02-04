@@ -162,12 +162,12 @@ class CameraValue {
 
   const CameraValue.uninitialized()
       : this(
-          isInitialized: false,
-          isRecordingVideo: false,
-          isTakingPicture: false,
-          isStreamingImages: false,
-          isRecordingPaused: false,
-        );
+    isInitialized: false,
+    isRecordingVideo: false,
+    isTakingPicture: false,
+    isStreamingImages: false,
+    isRecordingPaused: false,
+  );
 
   /// True after [CameraController.initialize] has completed successfully.
   final bool isInitialized;
@@ -241,23 +241,16 @@ class CameraValue {
 /// To show the camera preview on the screen use a [CameraPreview] widget.
 class CameraController extends ValueNotifier<CameraValue> {
   CameraController(
-    this.description,
-    this.resolutionPreset, {
-    this.enableAudio = true,
-        this.enableFlash = false,
-        this.enableAutoExposure = true,
-  }) : super(const CameraValue.uninitialized());
+      this.description,
+      this.resolutionPreset, {
+        this.enableAudio = true,
+      }) : super(const CameraValue.uninitialized());
 
   final CameraDescription description;
   final ResolutionPreset resolutionPreset;
 
   /// Whether to include audio when recording a video.
   final bool enableAudio;
-  /// Switch ON the flash when a camera is initialized
-  final bool enableFlash;
-
-  /// Switch ON the Auto Exposure when a camera is initialized
-  final bool enableAutoExposure;
 
   int _textureId;
   bool _isDisposed = false;
@@ -275,17 +268,14 @@ class CameraController extends ValueNotifier<CameraValue> {
     try {
       _creatingCompleter = Completer<void>();
       final Map<String, dynamic> reply =
-          await _channel.invokeMapMethod<String, dynamic>(
+      await _channel.invokeMapMethod<String, dynamic>(
         'initialize',
         <String, dynamic>{
           'cameraName': description.name,
           'resolutionPreset': serializeResolutionPreset(resolutionPreset),
           'enableAudio': enableAudio,
-          'enableFlash': enableFlash,
-          'enableAutoExposure': enableAutoExposure,
         },
       );
-
       _textureId = reply['textureId'];
       value = value.copyWith(
         isInitialized: true,
@@ -414,13 +404,13 @@ class CameraController extends ValueNotifier<CameraValue> {
       throw CameraException(e.code, e.message);
     }
     const EventChannel cameraEventChannel =
-        EventChannel('plugins.flutter.io/camera/imageStream');
+    EventChannel('plugins.flutter.io/camera/imageStream');
     _imageStreamSubscription =
         cameraEventChannel.receiveBroadcastStream().listen(
-      (dynamic imageData) {
-        onAvailable(CameraImage._fromPlatformData(imageData));
-      },
-    );
+              (dynamic imageData) {
+            onAvailable(CameraImage._fromPlatformData(imageData));
+          },
+        );
   }
 
   /// Stop streaming images from platform camera.
@@ -524,54 +514,6 @@ class CameraController extends ValueNotifier<CameraValue> {
     }
   }
 
-  /// Switch ON the flash.
-  Future<void> flashOn({double level = 1.0}) async {
-    if (!value.isInitialized || _isDisposed) {
-      throw CameraException(
-        'Uninitialized CameraController.',
-        'flashOn was called on uninitialized CameraController',
-      );
-    }
-
-    try {
-      await _channel
-          .invokeMethod<void>('flashOn', <String, dynamic>{'level': level});
-    } on PlatformException catch (e) {
-      throw CameraException(e.code, e.message);
-    }
-  }
-
-  /// Switch OFF the flash.
-  Future<void> flashOff() async {
-    if (!value.isInitialized || _isDisposed) {
-      throw CameraException(
-        'Uninitialized CameraController.',
-        'flashOff was called on uninitialized CameraController',
-      );
-    }
-
-    try {
-      await _channel.invokeMethod<void>('flashOff');
-    } on PlatformException catch (e) {
-      throw CameraException(e.code, e.message);
-    }
-  }
-
-  /// check if the device has a flash.
-  Future<bool> get hasFlash async {
-    if (!value.isInitialized || _isDisposed) {
-      throw CameraException(
-        'Uninitialized CameraController.',
-        'hasFlash was called on uninitialized CameraController',
-      );
-    }
-
-    try {
-      return await _channel.invokeMethod<bool>('hasFlash');
-    } on PlatformException catch (e) {
-      throw CameraException(e.code, e.message);
-    }
-  }
   /// Pause video recording.
   ///
   /// This feature is only available on iOS and Android sdk 24+.
@@ -598,37 +540,7 @@ class CameraController extends ValueNotifier<CameraValue> {
       throw CameraException(e.code, e.message);
     }
   }
-  /// Switch ON continuous Auto Exposure.
-  Future<void> autoExposureOn() async {
-    if (!value.isInitialized || _isDisposed) {
-      throw CameraException(
-        'Uninitialized CameraController.',
-        'autoExposureOn was called on uninitialized CameraController',
-      );
-    }
 
-    try {
-      await _channel.invokeMethod<void>('autoExposureOn');
-    } on PlatformException catch (e) {
-      throw CameraException(e.code, e.message);
-    }
-  }
-
-  /// Switch OFF continuous Auto Exposure.
-  Future<void> autoExposureOff() async {
-    if (!value.isInitialized || _isDisposed) {
-      throw CameraException(
-        'Uninitialized CameraController.',
-        'autoExposureOff was called on uninitialized CameraController',
-      );
-    }
-
-    try {
-      await _channel.invokeMethod<void>('autoExposureOff');
-    } on PlatformException catch (e) {
-      throw CameraException(e.code, e.message);
-    }
-  }
   /// Resume video recording after pausing.
   ///
   /// This feature is only available on iOS and Android sdk 24+.
